@@ -25,6 +25,7 @@ export type UserUpdate = { "active"?: boolean; "role"?: "user" | "admin"; "tool_
 export type Adjustment = { "user_id": string; "direction": "add" | "subtract"; "amount": number; "reason": string };
 export type BatchInput = { "name": string; "tier_id": string; "count": number };
 export type MailInput = { "host": string; "port": number; "secure": boolean; "user": string; "from": string; "password"?: string };
+export type AdminUser = { "id": string; "email": string; "role": "user" | "admin"; "verified": boolean; "active": boolean; "tool_roles": Record<string,string>; "created_at": string; "available_credits": number; "frozen_credits": number };
 export type Operations = {
 "health": { request: undefined; response: { "ok": boolean; "service": string } };
 "tools": { request: undefined; response: { "tools": Array<Tool>; "brand": string } };
@@ -48,7 +49,7 @@ export type Operations = {
 "tasks": { request: undefined; response: { "tasks": Array<TaskSummary>; "unavailable": Array<string>; "next_cursor": string | null } };
 "identity": { request: undefined; response: User };
 "validate_service": { request: undefined; response: { "tool_id": string; "scopes": Array<string> } };
-"users": { request: undefined; response: { "users": Array<User>; "next_cursor": string | null } };
+"users": { request: undefined; response: { "users": Array<AdminUser>; "next_cursor": string | null } };
 "create_user": { request: ManagedUserInput; response: Ok };
 "update_user": { request: UserUpdate; response: Ok };
 "adjust": { request: Adjustment; response: Ok };

@@ -13,6 +13,11 @@ export function expire(userId:string){
  const rows=db.prepare('SELECT * FROM buckets WHERE user_id=? AND remaining>0 AND expires_at IS NOT NULL AND expires_at<=?').all(userId,now()) as any[];
  for(const row of rows){db.prepare('UPDATE buckets SET remaining=0 WHERE id=?').run(row.id);db.prepare('INSERT OR IGNORE INTO ledger VALUES(?,?,?,?,?,?,?)').run(uid('ledger'),userId,'EXPIRED',-row.remaining,row.id+':'+uid('expiry'),'赠送积分到期',now());}
 }
+// Read a current snapshot without writing expiry ledgers when an administrator browses users.
+export function creditSummary(userId:string){return db.prepare(`SELECT
+ COALESCE((SELECT SUM(remaining) FROM buckets WHERE user_id=@userId AND (expires_at IS NULL OR expires_at>@at)),0) available_credits,
+ COALESCE((SELECT SUM(amount) FROM reservations WHERE user_id=@userId AND state='reserved'),0) frozen_credits
+ `).get({userId,at:now()}) as {available_credits:number;frozen_credits:number};}
 export function balance(userId:string){return db.transaction(()=>{
  expire(userId);
  const available=(db.prepare('SELECT COALESCE(SUM(remaining),0) n FROM buckets WHERE user_id=?').get(userId) as any).n;
