@@ -13,7 +13,7 @@ WORKDIR /app
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 DATA_DIR=/app/data
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/.next ./.next
-COPY --from=build --chown=node:node /app/package.json /app/server.ts /app/tsconfig.json ./
+COPY --from=build --chown=node:node /app/package.json /app/server.ts /app/tsconfig.json /app/next.config.mjs ./
 COPY --from=build --chown=node:node /app/src ./src
 COPY --from=build --chown=node:node /app/public ./public
 COPY --from=build --chown=node:node /app/scripts/import-yinglan.ts ./scripts/import-yinglan.ts
