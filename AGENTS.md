@@ -8,3 +8,4 @@
 - 协议变更先修改 contracts；运行契约生成和校验。生成客户端不得手改。
 - 验证：npm run lint、npm run typecheck、npm test、npm run build；联调另按 README 执行。
 - 此仓库本轮只做开发环境；禁止部署、读取生产数据或调用真实付费模型。
+- 前端入口：`/` 为公开产品介绍页，`/workspace` 为需要登录的工作台；首页不能默认挂载工作台侧栏。登录须保留工具选择、OIDC interaction 和工作台页面去向；更改导航运行 `npx tsx scripts/navigation-smoke.ts`。

@@ -5,6 +5,6 @@ const browser=await chromium.launch({channel:'msedge',headless:true,args:['--no-
 const page=await browser.newPage({viewport:{width:1440,height:1100}});page.on('pageerror',e=>console.log('PAGE ERROR',e.message));
 await page.goto('http://192.168.6.111:3200');await page.getByRole('heading',{name:/发现你的科研工具/}).waitFor();await page.screenshot({path:'test-results/platform-home.png',fullPage:true});
 await page.getByRole('button',{name:/登录账号/}).click();await page.getByLabel('邮箱',{exact:true}).fill(accounts[0].email);await page.getByLabel('密码',{exact:true}).fill(accounts[0].password);await page.getByRole('button',{name:'登录工作空间',exact:true}).click();await page.getByRole('button',{name:'平台管理',exact:true}).waitFor();
-console.log('Platform login passed');await page.getByRole('button',{name:'进入工具',exact:false}).click();await page.getByRole('link',{name:'通过 BioHub 登录'}).click();
+console.log('Platform login passed');await page.getByRole('button',{name:'进入工具',exact:false}).click();
 await page.waitForURL('http://192.168.6.111:3201/',{timeout:30000});await page.getByTestId('credit-balance').waitFor({timeout:30000});console.log('OIDC SSO passed');await page.screenshot({path:'test-results/yinglan-sso.png',fullPage:true});
 await browser.close();
