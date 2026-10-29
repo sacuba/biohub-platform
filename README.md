@@ -25,7 +25,9 @@ node scripts/dev-stack.mjs stop
 
 首次启动生成 `admin@biohub.test` 和 `researcher@biohub.test`。随机密码保存在 `../dev-runtime/platform/test-accounts.json`，目录权限 0700，文件权限 0600。仅在服务器上读取，不放入聊天、截图、Git 或网页。管理员的 Yinglan 管理权限是显式配置，平台角色不会自动继承为工具角色。
 
-开发邮件写入 `mail-capture.jsonl`，仅供服务器测试读取，无公开预览路由。后台可保存 SMTP 配置，但联调固定使用邮件捕获，不会发送真实邮件。不导入生产邮件凭据。
+已从原 Yinglan 开发配置恢复平台 SMTP，密码使用平台密钥重新加密，未读取生产配置。当前常规启动使用 SMTP 真实发信；运行偏好存于受限的 `../dev-runtime/preferences.json`。后台仍可修改 SMTP 设置。`npx tsx scripts/restore-development-mail.ts` 仅校验连接、TLS 和认证，不发邮件；明确需要测试邮件时传 `--send-to=收件邮箱`。
+
+合成账号自动化测试必须使用邮件捕获：先停止开发平台，再以 `BIOHUB_MAIL_TRANSPORT=capture node scripts/dev-stack.mjs start platform`（在工作区根目录）启动。测试邮件写入受限 `mail-capture.jsonl`，无公开预览路由。结束后停止并用普通命令启动平台恢复 SMTP；不要向真实 SMTP 批量投递 `.test` 账号邮件。
 
 启动器状态及日志位于 `../dev-runtime/stack.json`、`platform.log`、`yinglan.log`。`stop` 校验进程工作目录和脚本后仅结束本启动器管理的开发进程；不操作 Docker 或生产任务。不要手工复用这里的 PID。可追加 `platform` 或 `yinglan` 参数，仅操作指定开发服务，例如 `node scripts/dev-stack.mjs stop yinglan`。
 
@@ -56,6 +58,8 @@ npm run build
 npx tsx scripts/integration.ts
 # 产品首页、工作台、登录去向、旧链接和手机导航
 npx tsx scripts/navigation-smoke.ts
+# 已恢复公共模板的浏览器创作、个人副本和隔离检查
+npx tsx scripts/template-smoke.ts
 # 真实开发进程停止/重启检查（会短暂中断 3200/3201）
 npx tsx scripts/restart-smoke.ts
 # yinglan 仓库：独立模式及钱包恢复回归
