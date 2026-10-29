@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {chromium,type BrowserContext} from '@playwright/test';
-const platform='https://biohub.zhangwuji.work:49998',tool='https://sanger.zhangwuji.work';
+const platform='https://biohub.zhangwuji.work:49998',tool='https://sanger.zhangwuji.work:49998';
 const amino='EVQLVESGGGLVQPGGSLRLSCAASGFTFSSYAMSWVRQAPGKGLEWVSAISGSGGSTYYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAVYYCAKDRWGQGTLVTVSS';
 const codons:Record<string,string>={A:'GCT',C:'TGT',D:'GAT',E:'GAA',F:'TTT',G:'GGT',H:'CAT',I:'ATT',K:'AAA',L:'CTG',M:'ATG',N:'AAT',P:'CCT',Q:'CAA',R:'CGT',S:'TCT',T:'ACT',V:'GTT',W:'TGG',Y:'TAT'};
 const sample=Buffer.from('>artificial-release-probe\n'+[...amino].map(a=>codons[a]).join('')+'\n');

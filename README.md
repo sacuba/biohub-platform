@@ -83,3 +83,5 @@ npm run build
 AbTrace 已完整增加独立客户端、工具角色、worker 钱包边界及任务聚合；新开发用户默认允许使用两工具，既有账号需在后台明确授权。Sanger 开发期按每样本每次分析 0 积分，仍记录冻结和结算。启动器可追加 sanger 仅操作 3202。测试期间使用 `BIOHUB_MAIL_TRANSPORT=capture`，不修改既有 SMTP 配置。验证增加 `scripts/sanger-integration.ts` 与 `scripts/sanger-recovery.ts`，结果保存在受限的 dev-runtime/sanger。
 
 Sanger 首次 Docker 发布操作见 `deploy/sanger-release.py` 和相邻 `sanger/deploy/README.md`。默认检查正式 HTTPS/准确回调，不使用跳过证书验证。`--execute` 维护并冷备份平台后更新生产镜像和 sanger:user 权限；不改原账号密码与钱包，保留角色回滚日志。
+
+Sanger Docker 已于北京时间 2026-10-30 上线：https://sanger.zhangwuji.work:49998；正常已验证账号已添加普通工具权限，首发免费，旧 Sanger 数据显式映射。Yinglan 容器未重启。发布详情见相邻 sanger/deploy/发布记录-2026-10-30.md。

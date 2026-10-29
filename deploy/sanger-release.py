@@ -18,7 +18,7 @@ PLATFORM=ROOT/'platform-prod'
 SANGER=ROOT/'sanger-prod'
 STATE=ROOT/'release-runtime/sanger'
 PLATFORM_URL='https://biohub.zhangwuji.work:49998'
-TOOL_URL='https://sanger.zhangwuji.work'
+TOOL_URL='https://sanger.zhangwuji.work:49998'
 
 
 def run(args,**kwargs):
