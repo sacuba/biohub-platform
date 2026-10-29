@@ -1,0 +1,10 @@
+# Platform 开发规则
+
+- 先读工作区 AGENTS.md、README、contracts/README。此仓库负责统一身份、钱包、工具目录和管理后台。
+- Node 22+，TypeScript、Next.js、Express、oidc-provider、SQLite。开发入口 `npm run dev:integration`，端口 3200。
+- 数据必须在独立开发目录；运行脚本拒绝生产路径及指向生产的符号链接。不使用生产 .env。
+- 钱包写入需 SQLite 事务、幂等键和唯一约束；网络调用不得放在数据库事务中。金额为整数分，积分为整数，业务日期使用 Asia/Shanghai。
+- 服务身份只允许指定工具的既有冻结结算/释放；新冻结必须有用户授权。密码、SMTP 凭据和令牌不返回浏览器。
+- 协议变更先修改 contracts；运行契约生成和校验。生成客户端不得手改。
+- 验证：npm run lint、npm run typecheck、npm test、npm run build；联调另按 README 执行。
+- 此仓库本轮只做开发环境；禁止部署、读取生产数据或调用真实付费模型。

@@ -1,0 +1,1 @@
+export default {devIndicators:false,distDir:process.env.NEXT_OUTPUT_DIR||'.next',poweredByHeader:false,allowedDevOrigins:['192.168.6.111'],typescript:{ignoreBuildErrors:false},eslint:{ignoreDuringBuilds:true}};
