@@ -21,6 +21,9 @@ const secrets=JSON.parse(fs.readFileSync(secretsFile,'utf8'));
 export const config={
  dataDir, appUrl:(process.env.APP_URL||'http://192.168.6.111:3200').replace(/\/$/,''),
  yinglanUrl:(process.env.YINGLAN_URL||'http://192.168.6.111:3201').replace(/\/$/,''),
+ sangerEnabled:process.env.SANGER_ENABLED==='true'||(process.env.NODE_ENV!=='production'&&process.env.SANGER_ENABLED!=='false'),
+ sangerUrl:(process.env.SANGER_URL||'http://192.168.6.111:3202').replace(/\/$/,''),
+ sangerClientSecret:process.env.SANGER_CLIENT_SECRET||'',sangerWorkerSecret:process.env.SANGER_WORKER_SECRET||'',
  brand:process.env.PLATFORM_BRAND||'BioHub', port:Number(process.env.PORT||3200),
  cookieSecret:process.env.SESSION_SECRET||secrets.cookie,encryptionKey:process.env.ENCRYPTION_KEY||secrets.encryption,
  userClientSecret:process.env.YINGLAN_CLIENT_SECRET||'',workerSecret:process.env.YINGLAN_WORKER_SECRET||'',
@@ -31,6 +34,10 @@ if(process.env.NODE_ENV==='production'){
  if(!config.appUrl.startsWith('https://')||!config.yinglanUrl.startsWith('https://'))throw new Error('Production requires HTTPS');
  if(!process.env.DATA_DIR||!process.env.SESSION_SECRET||process.env.SESSION_SECRET.length<32||!process.env.ENCRYPTION_KEY||!/^[a-f0-9]{64}$/i.test(process.env.ENCRYPTION_KEY))throw new Error('Production data directory and independent secrets required');
  for(const secret of [config.userClientSecret,config.workerSecret,config.aggregatorSecret])if(secret.length<32)throw new Error('Production service secrets required');
+ if(config.sangerEnabled){
+  const sanger=new URL(config.sangerUrl);if(sanger.protocol!=='https:'||sanger.username||sanger.password||sanger.pathname!=='/'||sanger.search||sanger.hash||!process.env.SANGER_URL)throw new Error('Sanger production requires an exact HTTPS origin');
+  if(config.sangerClientSecret.length<32||config.sangerWorkerSecret.length<32||config.sangerClientSecret===config.sangerWorkerSecret)throw new Error('Sanger production requires independent user/worker secrets');
+ }
  if(process.env.DEV_MOCK_IMAGES==='true')throw new Error('Production must not use mock images');
 }
 export const issuer=config.appUrl+'/oidc';

@@ -2,6 +2,7 @@ import {config} from './config';
 import type {Tool} from './generated/platform';
 export function tools():Tool[]{return [
  {id:'yinglan',name:'Yinglan 科研生图',category:'科研绘图',description:'将科研构想转化为图像。支持文字生图、参考图生成和局部修图。',status:'available',url:config.yinglanUrl+'/api/platform/login',capabilities:['generation','edit'],contract_version:'0.1.0'},
+ {id:'sanger',name:'AbTrace Sanger 抗体分析',category:'序列工具',description:'Sanger AB1 峰图质控、双向共识、抗体 V(D)J 与 FR/CDR 注释，支持参考序列比对与报告下载。',status:config.sangerEnabled?'available':'coming_soon',...(config.sangerEnabled?{url:config.sangerUrl+'/api/platform/login'}:{}),capabilities:['annotation'],contract_version:'0.1.0'},
  {id:'sequence',name:'序列格式转换',category:'序列工具',description:'在 FASTA、FASTQ 等常见格式之间转换，让数据准备更简单。',status:'coming_soon',capabilities:[],contract_version:'0.1.0'},
  {id:'quality',name:'序列质量检查',category:'序列工具',description:'检查测序数据质量，发现异常分布与潜在问题。',status:'coming_soon',capabilities:[],contract_version:'0.1.0'},
  {id:'enrichment',name:'功能富集分析',category:'功能分析',description:'探索基因集背后的生物学过程、通路与功能关联。',status:'coming_soon',capabilities:[],contract_version:'0.1.0'},

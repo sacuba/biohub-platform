@@ -29,3 +29,17 @@ test('admin credit summary matches spendable balance, excludes expiry and shows 
  assert.deepEqual(w.creditSummary(id),{available_credits:20,frozen_credits:0});assert.equal((db.prepare('SELECT COUNT(*) n FROM ledger').get() as any).n,before);
  const r=hold(id);assert.deepEqual(w.creditSummary(id),{available_credits:15,frozen_credits:5});assert.equal(w.balance(id).available,w.creditSummary(id).available_credits);w.finish('yinglan',r.id,'release','admin-summary-release');assert.deepEqual(w.creditSummary(id),{available_credits:20,frozen_credits:0});
 });
+
+test('AbTrace annotation has its own zero price and worker cannot finish Yinglan holds',()=>{
+ const id=account();fund(id,20);
+ const task=uid('analysis'),q=w.quote(id,'sanger',{task_id:task,parameters_hash:'analysis-parameters',capability:'annotation'},'sanger-quote');
+ assert.equal(q.amount,0);
+ assert.throws(()=>w.quote(id,'sanger',{task_id:uid('task'),parameters_hash:'x',capability:'generation'},'wrong-capability'),/未开放/);
+ assert.throws(()=>w.quote(id,'yinglan',{task_id:uid('task'),parameters_hash:'x',capability:'annotation'},'wrong-image-capability'),/未开放/);
+ const r=w.reserve(id,'sanger',{quote_id:q.id,task_id:task,parameters_hash:q.parameters_hash},'sanger-reserve');
+ assert.equal(w.balance(id).available,20);assert.equal(r.amount,0);
+ assert.throws(()=>w.finish('yinglan',r.id,'settle','wrong-worker'),/其他工具/);
+ w.finish('sanger',r.id,'settle','sanger-settle');w.finish('sanger',r.id,'settle','sanger-settle');
+ assert.equal(w.operation('sanger',task)?.state,'settled');assert.equal(w.balance(id).available,20);
+ const image=hold(id);assert.throws(()=>w.finish('sanger',image.id,'release','sanger-cross-tool'),/其他工具/);
+});

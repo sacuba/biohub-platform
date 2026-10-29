@@ -2,6 +2,9 @@ import crypto from 'node:crypto';
 import {db,setting,AppError,demand} from './db';
 import {uid,now,hash} from './config';
 import type {Rules,Tier,Quote,Reservation} from './generated/platform';
+// AbTrace developer policy: change only after a separate pricing approval.
+export const annotationPricing={unit:'sample_analysis_run',credits:Number(process.env.SANGER_ANALYSIS_CREDITS||0),version:Number(process.env.SANGER_PRICE_VERSION||1)} as const;
+if(!Number.isSafeInteger(annotationPricing.credits)||annotationPricing.credits<0||!Number.isSafeInteger(annotationPricing.version)||annotationPricing.version<1)throw new Error('Invalid annotation pricing configuration');
 export function rules(){return setting<Rules>('rules');}
 export function grant(userId:string,amount:number,kind:string,reference:string,expires:string|null=null,reason=''){
  demand(Number.isSafeInteger(amount)&&amount>=0,'INVALID_AMOUNT','积分必须是非负整数');
@@ -35,8 +38,8 @@ export function idempotent<T>(scope:string,key:string,input:unknown,fn:()=>T):T{
  })();
 }
 export function quote(userId:string,toolId:string,input:{task_id:string;parameters_hash:string;capability:string},key:string):Quote{
- demand(toolId==='yinglan'&&['generation','edit','batch'].includes(input.capability),'CAPABILITY_NOT_ALLOWED','工具能力未开放',403);
- return idempotent('quote:'+userId+':'+toolId,key,input,()=>{const r=rules();const q:Quote={id:uid('quote'),user_id:userId,tool_id:toolId,task_id:input.task_id,amount:r.image_cost,price_version:r.version,parameters_hash:input.parameters_hash,expires_at:new Date(Date.now()+600000).toISOString()};db.prepare('INSERT INTO quotes VALUES(?,?,?,?,?,?,?,?)').run(q.id,q.user_id,q.tool_id,q.task_id,q.amount,q.price_version,q.parameters_hash,q.expires_at);return q;});
+ demand((toolId==='yinglan'&&['generation','edit','batch'].includes(input.capability))||(toolId==='sanger'&&input.capability==='annotation'),'CAPABILITY_NOT_ALLOWED','工具能力未开放',403);
+ return idempotent('quote:'+userId+':'+toolId,key,input,()=>{const r=rules();const q:Quote={id:uid('quote'),user_id:userId,tool_id:toolId,task_id:input.task_id,amount:toolId==='sanger'?annotationPricing.credits:r.image_cost,price_version:toolId==='sanger'?annotationPricing.version:r.version,parameters_hash:input.parameters_hash,expires_at:new Date(Date.now()+600000).toISOString()};db.prepare('INSERT INTO quotes VALUES(?,?,?,?,?,?,?,?)').run(q.id,q.user_id,q.tool_id,q.task_id,q.amount,q.price_version,q.parameters_hash,q.expires_at);return q;});
 }
 function publicReservation(row:any):Reservation{const {allocations:_allocations,quote_id:_quote_id,updated_at:_updated,...safe}=row;return safe;}
 export function operation(toolId:string,taskId:string,userId?:string){const row=db.prepare('SELECT * FROM reservations WHERE tool_id=? AND task_id=?').get(toolId,taskId) as any;if(row&&userId)demand(row.user_id===userId,'FORBIDDEN','任务不属于当前用户',403);return row?publicReservation(row):null;}
@@ -69,7 +72,7 @@ export function finish(toolId:string,reservationId:string,action:'settle'|'relea
  expire(r.user_id);
  }
  db.prepare('UPDATE reservations SET state=?,updated_at=? WHERE id=?').run(target,now(),r.id);
- db.prepare('INSERT INTO ledger VALUES(?,?,?,?,?,?,?)').run(uid('ledger'),r.user_id,action==='settle'?'USAGE':'RELEASE',action==='settle'?-r.amount:0,r.task_id,action==='settle'?'Yinglan 任务消费':'失败或取消，释放冻结积分',now());
+ db.prepare('INSERT INTO ledger VALUES(?,?,?,?,?,?,?)').run(uid('ledger'),r.user_id,action==='settle'?'USAGE':'RELEASE',action==='settle'?-r.amount:0,r.task_id,action==='settle'?toolId+' 任务消费':'失败或取消，释放冻结积分',now());
  return publicReservation({...r,state:target});
  });
 }

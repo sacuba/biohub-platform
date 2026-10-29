@@ -14,6 +14,7 @@ node scripts/dev-stack.mjs stop
 
 - 平台：<http://192.168.6.111:3200>
 - Yinglan 平台联调版：<http://192.168.6.111:3201>
+- AbTrace Sanger 抗体分析：<http://192.168.6.111:3202>（先按 sanger/integration/README.md 安装 Python 接入依赖）
 - 单独启动：对应仓库执行 `npm run dev:integration`，前台 Ctrl+C 停止。
 - 请统一使用上述 IP，不能混用 localhost，OIDC 回调和 Cookie 有固定来源要求。
 
@@ -75,6 +76,10 @@ npm run build
 
 公共接口位于相邻 `contracts/openapi/platform-v1.json`（0.1.0），应用保存生成客户端和 SHA-256 锁文件。`npm run contracts:check` 检查漂移；禁止手改 `src/generated`。
 
-后续工具接入见 [接入下一个工具](docs/接入下一个工具.md)。当前 OIDC 客户端、服务作用域及任务聚合仍明确注册 Yinglan，新增工具时必须在平台代码中同步注册并补权限测试；工具清单不会自动注册任意远程服务地址。
+后续工具接入见 [接入下一个工具](docs/接入下一个工具.md)。当前 OIDC 客户端、服务身份及任务聚合明确注册 Yinglan 与 AbTrace；新增工具仍需同步注册并补权限测试，工具清单不会自动注册任意远程服务地址。
 
 工作区启动脚本位于仓库外，平台仓库内的 `scripts/dev.mjs` 是等价单项目入口。若换服务器，请同时搬迁工作区 `AGENTS.md`、`scripts` 和 `docs`，不要复制任何 `dev-runtime` 密钥到代码仓库。生产使用独立的 `platform-prod` 与 Docker 镜像，不使用此开发启动器；首次切换必须通过生产迁移手册的 HTTPS、数据核对与回滚检查。
+
+AbTrace 已完整增加独立客户端、工具角色、worker 钱包边界及任务聚合；新开发用户默认允许使用两工具，既有账号需在后台明确授权。Sanger 开发期按每样本每次分析 0 积分，仍记录冻结和结算。启动器可追加 sanger 仅操作 3202。测试期间使用 `BIOHUB_MAIL_TRANSPORT=capture`，不修改既有 SMTP 配置。验证增加 `scripts/sanger-integration.ts` 与 `scripts/sanger-recovery.ts`，结果保存在受限的 dev-runtime/sanger。
+
+Sanger 首次 Docker 发布操作见 `deploy/sanger-release.py` 和相邻 `sanger/deploy/README.md`。默认检查正式 HTTPS/准确回调，不使用跳过证书验证。`--execute` 维护并冷备份平台后更新生产镜像和 sanger:user 权限；不改原账号密码与钱包，保留角色回滚日志。
