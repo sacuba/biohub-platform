@@ -105,8 +105,18 @@ def execute():
             time.sleep(3)
         compose('yinglan', 'stop', 'web'); old_stopped = True
         run(['docker', 'run', '-d', '--name', 'yinglan-upgrade', '--restart', 'unless-stopped', '-p', '192.168.6.111:3001:80', '-v', str(ROOT / 'yinglan/deploy/upgrade/nginx.conf') + ':/etc/nginx/nginx.conf:ro', '-v', str(ROOT / 'yinglan/deploy/upgrade/index.html') + ':/usr/share/nginx/html/upgrade.html:ro', 'nginx:stable-alpine'], stdout=subprocess.DEVNULL)
-        if fetch(TOOL_URL)[0] != 503:
-            raise RuntimeError('Upgrade page not visible through public URL')
+        upgrade_ready = False
+        for _ in range(20):
+            try:
+                status, body = fetch(TOOL_URL + '/?upgrade=' + stamp)
+                if status == 503 and '正在升级'.encode() in body:
+                    upgrade_ready = True
+                    break
+            except OSError:
+                pass
+            time.sleep(1)
+        if not upgrade_ready:
+            raise RuntimeError('Upgrade page not visible through public URL after readiness wait')
         compose('platform', 'stop', 'web'); platform_stopped = True
         archive = attempt / 'before-cutover.tgz'
         with tarfile.open(archive, 'w:gz') as tar:
@@ -142,6 +152,7 @@ def execute():
         (OLD / 'data/.maintenance').unlink(missing_ok=True)
         report = {'completed_at': datetime.datetime.now(datetime.timezone.utc).isoformat(), 'backup': str(archive), 'platform_url': PLATFORM_URL, 'tool_url': TOOL_URL, 'rollback': 'Requires maintenance and joint data restore; never roll back only the tool image after wallet writes.'}
         (NEW / 'migration-completed.json').write_text(json.dumps(report, indent=2) + '\n')
+        export.unlink(missing_ok=True)  # Contains a decrypted SMTP credential; the protected backup is sufficient.
         print(json.dumps(report), flush=True)
     except BaseException:
         print('Cutover failed. Restoring the prior services before reopening writes.', flush=True)

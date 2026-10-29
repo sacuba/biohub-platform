@@ -1,7 +1,7 @@
 [Unit]
 Description=Daily BioHub and Yinglan backup
 [Timer]
-OnCalendar=*-*-* 04:20:00
+OnCalendar=*-*-* 19:20:00 UTC
 RandomizedDelaySec=300
 Persistent=true
 [Install]
