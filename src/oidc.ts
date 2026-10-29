@@ -21,8 +21,8 @@ class Adapter {
 export let provider:Provider;
 export async function setupOidc(app:Express){
  const keyFile=path.join(config.dataDir,'oidc-jwks.json');
- if(!fs.existsSync(keyFile)){const {privateKey}=await generateKeyPair('RS256',{extractable:true});const key=await exportJWK(privateKey);fs.writeFileSync(keyFile,JSON.stringify({keys:[{...key,kid:'dev-primary',use:'sig',alg:'RS256'}]}),{mode:0o600,flag:'wx'});}
- demand(config.userClientSecret&&config.workerSecret&&config.aggregatorSecret,'CONFIG_MISSING','请使用开发启动脚本配置服务凭据');
+ if(!fs.existsSync(keyFile)){const {privateKey}=await generateKeyPair('RS256',{extractable:true});const key=await exportJWK(privateKey);fs.writeFileSync(keyFile,JSON.stringify({keys:[{...key,kid:'primary',use:'sig',alg:'RS256'}]}),{mode:0o600,flag:'wx'});}
+ demand(config.userClientSecret&&config.workerSecret&&config.aggregatorSecret,'CONFIG_MISSING','请配置身份服务凭据');
  provider=new Provider(issuer,{
  adapter:Adapter,
  clients:[
@@ -40,6 +40,7 @@ export async function setupOidc(app:Express){
  async findAccount(_ctx,id){const row=userRow(id);if(!row?.active||!row.verified)return undefined;return {accountId:id,async claims(){const u=publicUser(userRow(id));return {sub:u.id,email:u.email,email_verified:u.verified,tool_roles:u.tool_roles};}};},
  async extraTokenClaims(_ctx,token){return {tool_id:token.clientId==='yinglan'||token.clientId==='yinglan-worker'?'yinglan':undefined};},
  });
+ if(process.env.NODE_ENV==='production')provider.proxy=true;
  app.get('/interaction/:uid',async(req,res,next)=>{try{
  const details=await provider.interactionDetails(req,res);const current=session(req);
  if(!current){res.redirect('/?login=1&return_to='+encodeURIComponent('/interaction/'+details.uid));return;}

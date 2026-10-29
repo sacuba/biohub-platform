@@ -1,0 +1,22 @@
+name: biohub-prod
+services:
+  web:
+    image: ${BIOHUB_IMAGE:?set BIOHUB_IMAGE}
+    restart: unless-stopped
+    init: true
+    env_file: ${BIOHUB_ENV_FILE:-/opt/sci_image/platform-prod/.env}
+    ports:
+      - "${BIOHUB_BIND_IP:-192.168.6.111}:${BIOHUB_PORT:-3002}:3000"
+    volumes:
+      - ${BIOHUB_DATA_DIR:-/opt/sci_image/platform-prod/data}:/app/data
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    stop_grace_period: 30s
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}

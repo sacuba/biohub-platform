@@ -1,0 +1,14 @@
+.git
+node_modules
+.next*
+.env*
+test-results
+playwright-report
+*.log
+*.tsbuildinfo
+*.sqlite*
+data
+backups
+next-env.d.ts
+__pycache__
+*.pyc

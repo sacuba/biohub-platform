@@ -1,0 +1,9 @@
+[Unit]
+Description=BioHub and Yinglan joint consistent backup
+After=docker.service
+Requires=docker.service
+[Service]
+Type=oneshot
+UMask=0077
+ExecStart=/usr/bin/python3 /opt/sci_image/platform-prod/source/deploy/backup.py
+TimeoutStartSec=1200

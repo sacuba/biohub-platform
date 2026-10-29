@@ -1,6 +1,6 @@
 # BioHub · 生信工具平台（开发版）
 
-统一工具入口、OIDC 账号和积分钱包。Node.js 22+，Next.js / TypeScript、Express、oidc-provider、SQLite；不依赖 PostgreSQL 或 Redis。本轮不提供生产部署，未迁移现有 Yinglan 用户。
+统一工具入口、OIDC 账号和积分钱包。Node.js 22+，Next.js / TypeScript、Express、oidc-provider、SQLite；不依赖 PostgreSQL 或 Redis。开发环境与生产环境分离；生产部署、整体迁移与联合备份见 [生产迁移手册](docs/生产迁移手册.md)。
 
 ## 启动与停止
 
@@ -77,4 +77,4 @@ npm run build
 
 后续工具接入见 [接入下一个工具](docs/接入下一个工具.md)。当前 OIDC 客户端、服务作用域及任务聚合仍明确注册 Yinglan，新增工具时必须在平台代码中同步注册并补权限测试；工具清单不会自动注册任意远程服务地址。
 
-工作区启动脚本位于仓库外，平台仓库内的 `scripts/dev.mjs` 是等价单项目入口。若换服务器，请同时搬迁工作区 `AGENTS.md`、`scripts` 和 `docs`，不要复制任何 `dev-runtime` 密钥到代码仓库。本轮未创建平台生产环境，生产域名、HTTPS、真实 SMTP、真实供应商、现有用户迁移与正式发布需独立实施和验收。
+工作区启动脚本位于仓库外，平台仓库内的 `scripts/dev.mjs` 是等价单项目入口。若换服务器，请同时搬迁工作区 `AGENTS.md`、`scripts` 和 `docs`，不要复制任何 `dev-runtime` 密钥到代码仓库。生产使用独立的 `platform-prod` 与 Docker 镜像，不使用此开发启动器；首次切换必须通过生产迁移手册的 HTTPS、数据核对与回滚检查。

@@ -10,7 +10,7 @@ export function resolvedPath(input:string):string {
 }
 export function safeDataDir(input:string){
  const target=resolvedPath(input);
- if(target.split(path.sep).some(part=>part.endsWith('-prod')||part==='yinglan-prod'))throw new Error('禁止在开发平台中使用生产目录');
+ if(process.env.NODE_ENV!=='production'&&target.split(path.sep).some(part=>part.endsWith('-prod')||part==='yinglan-prod'))throw new Error('禁止在开发平台中使用生产目录');
  return target;
 }
 export const dataDir=safeDataDir(process.env.DATA_DIR||path.resolve('..','dev-runtime','platform'));
@@ -27,7 +27,12 @@ export const config={
  aggregatorSecret:process.env.PLATFORM_SERVICE_SECRET||'',mockSecret:process.env.MOCK_API_SECRET||'',
  capture:process.env.MAIL_TRANSPORT!=='smtp'&&process.env.NODE_ENV!=='production',
 };
-if(process.env.NODE_ENV==='production'&&!config.appUrl.startsWith('https://'))throw new Error('Production requires HTTPS');
+if(process.env.NODE_ENV==='production'){
+ if(!config.appUrl.startsWith('https://')||!config.yinglanUrl.startsWith('https://'))throw new Error('Production requires HTTPS');
+ if(!process.env.DATA_DIR||!process.env.SESSION_SECRET||process.env.SESSION_SECRET.length<32||!process.env.ENCRYPTION_KEY||!/^[a-f0-9]{64}$/i.test(process.env.ENCRYPTION_KEY))throw new Error('Production data directory and independent secrets required');
+ for(const secret of [config.userClientSecret,config.workerSecret,config.aggregatorSecret])if(secret.length<32)throw new Error('Production service secrets required');
+ if(process.env.DEV_MOCK_IMAGES==='true')throw new Error('Production must not use mock images');
+}
 export const issuer=config.appUrl+'/oidc';
 export const uid=(prefix:string)=>prefix+'_'+crypto.randomUUID();
 export const hash=(v:string)=>crypto.createHash('sha256').update(v).digest('hex');
