@@ -1,0 +1,2 @@
+// Run in <head> before the first paint so a stored dark theme never flashes light.
+export const themeInitialization=`(()=>{try{const saved=localStorage.getItem('biohub-theme');const theme=saved==='light'||saved==='dark'?saved:(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.dataset.theme=theme;}catch{document.documentElement.dataset.theme='light';}})();`;

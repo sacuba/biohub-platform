@@ -1,3 +1,4 @@
+import {molecularTools} from './catalog';
 import crypto from 'node:crypto';
 import {db,setting,AppError,demand} from './db';
 import {uid,now,hash} from './config';
@@ -21,12 +22,21 @@ export function creditSummary(userId:string){return db.prepare(`SELECT
  COALESCE((SELECT SUM(remaining) FROM buckets WHERE user_id=@userId AND (expires_at IS NULL OR expires_at>@at)),0) available_credits,
  COALESCE((SELECT SUM(amount) FROM reservations WHERE user_id=@userId AND state='reserved'),0) frozen_credits
  `).get({userId,at:now()}) as {available_credits:number;frozen_credits:number};}
-export function balance(userId:string){return db.transaction(()=>{
+export function balance(userId:string,includeLedger=true){return db.transaction(()=>{
  expire(userId);
  const available=(db.prepare('SELECT COALESCE(SUM(remaining),0) n FROM buckets WHERE user_id=?').get(userId) as any).n;
  const frozen=(db.prepare("SELECT COALESCE(SUM(amount),0) n FROM reservations WHERE user_id=? AND state='reserved'").get(userId) as any).n;
- const ledger=db.prepare('SELECT l.*,COALESCE(b.remaining,0) remaining,b.expires_at FROM ledger l LEFT JOIN buckets b ON b.user_id=l.user_id AND b.kind=l.kind AND b.reference=l.reference WHERE l.user_id=? ORDER BY l.rowid DESC LIMIT 200').all(userId) as any[];
+ const ledger=includeLedger?db.prepare('SELECT l.*,COALESCE(b.remaining,0) remaining,b.expires_at FROM ledger l LEFT JOIN buckets b ON b.user_id=l.user_id AND b.kind=l.kind AND b.reference=l.reference WHERE l.user_id=? ORDER BY l.rowid DESC LIMIT 200').all(userId) as any[]:[];
  return {available,frozen,ledger:ledger.map(({user_id:_user,...r})=>r),tiers:setting<Tier[]>('tiers').filter(t=>t.enabled),rules:rules()};
+})()}
+// Account scope comes from the server session, never from browser query parameters.
+export function ledgerPage(userId:string,page=1,pageSize=20){return db.transaction(()=>{
+ demand(Number.isSafeInteger(page)&&page>=1&&[20,50,100].includes(pageSize),'INVALID_PAGE','分页参数无效');
+ expire(userId);
+ const total=(db.prepare('SELECT COUNT(*) total FROM ledger WHERE user_id=?').get(userId) as {total:number}).total;
+ const totalPages=Math.max(1,Math.ceil(total/pageSize)),current=Math.min(page,totalPages);
+ const ledger=db.prepare('SELECT l.id,l.kind,l.amount,l.reference,l.reason,l.created_at,COALESCE(b.remaining,0) remaining,b.expires_at FROM ledger l LEFT JOIN buckets b ON b.user_id=l.user_id AND b.kind=l.kind AND b.reference=l.reference WHERE l.user_id=? ORDER BY l.rowid DESC LIMIT ? OFFSET ?').all(userId,pageSize,(current-1)*pageSize);
+ return {ledger,total,page:current,page_size:pageSize,total_pages:totalPages};
 })()}
 export function daily(userId:string){return db.transaction(()=>{const day=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());const r=rules();grant(userId,r.daily,'DAILY_GIFT','daily:'+day,new Date(Date.now()+r.gift_hours*3600000).toISOString());return {ok:true};})()}
 export function registrationGift(userId:string){const r=rules();grant(userId,r.registration,'REGISTER_GIFT','registration',new Date(Date.now()+r.gift_hours*3600000).toISOString());}
@@ -38,8 +48,8 @@ export function idempotent<T>(scope:string,key:string,input:unknown,fn:()=>T):T{
  })();
 }
 export function quote(userId:string,toolId:string,input:{task_id:string;parameters_hash:string;capability:string},key:string):Quote{
- demand((toolId==='yinglan'&&['generation','edit','batch'].includes(input.capability))||(toolId==='sanger'&&input.capability==='annotation'),'CAPABILITY_NOT_ALLOWED','工具能力未开放',403);
- return idempotent('quote:'+userId+':'+toolId,key,input,()=>{const r=rules();const q:Quote={id:uid('quote'),user_id:userId,tool_id:toolId,task_id:input.task_id,amount:toolId==='sanger'?annotationPricing.credits:r.image_cost,price_version:toolId==='sanger'?annotationPricing.version:r.version,parameters_hash:input.parameters_hash,expires_at:new Date(Date.now()+600000).toISOString()};db.prepare('INSERT INTO quotes VALUES(?,?,?,?,?,?,?,?)').run(q.id,q.user_id,q.tool_id,q.task_id,q.amount,q.price_version,q.parameters_hash,q.expires_at);return q;});
+ demand((toolId==='yinglan'&&['generation','edit','batch'].includes(input.capability))||(toolId==='sanger'&&input.capability==='annotation')||(molecularTools().some(t=>t.id===toolId)&&input.capability==='compute'),'CAPABILITY_NOT_ALLOWED','工具能力未开放',403);
+ return idempotent('quote:'+userId+':'+toolId,key,input,()=>{const r=rules();const q:Quote={id:uid('quote'),user_id:userId,tool_id:toolId,task_id:input.task_id,amount:toolId.startsWith('mol-')?0:toolId==='sanger'?annotationPricing.credits:r.image_cost,price_version:toolId.startsWith('mol-')?1:toolId==='sanger'?annotationPricing.version:r.version,parameters_hash:input.parameters_hash,expires_at:new Date(Date.now()+600000).toISOString()};db.prepare('INSERT INTO quotes VALUES(?,?,?,?,?,?,?,?)').run(q.id,q.user_id,q.tool_id,q.task_id,q.amount,q.price_version,q.parameters_hash,q.expires_at);return q;});
 }
 function publicReservation(row:any):Reservation{const {allocations:_allocations,quote_id:_quote_id,updated_at:_updated,...safe}=row;return safe;}
 export function operation(toolId:string,taskId:string,userId?:string){const row=db.prepare('SELECT * FROM reservations WHERE tool_id=? AND task_id=?').get(toolId,taskId) as any;if(row&&userId)demand(row.user_id===userId,'FORBIDDEN','任务不属于当前用户',403);return row?publicReservation(row):null;}

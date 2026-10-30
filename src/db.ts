@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS sessions(token_hash TEXT PRIMARY KEY,user_id TEXT NOT
 CREATE TABLE IF NOT EXISTS account_tokens(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),kind TEXT NOT NULL,token_hash TEXT NOT NULL,expires_at INTEGER NOT NULL,attempts INTEGER NOT NULL DEFAULT 0);
 CREATE TABLE IF NOT EXISTS buckets(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),kind TEXT NOT NULL,amount INTEGER NOT NULL CHECK(amount>=0),remaining INTEGER NOT NULL CHECK(remaining>=0),expires_at TEXT,reference TEXT NOT NULL,created_at TEXT NOT NULL,UNIQUE(user_id,kind,reference));
 CREATE TABLE IF NOT EXISTS ledger(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),kind TEXT NOT NULL,amount INTEGER NOT NULL,reference TEXT NOT NULL,reason TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL,UNIQUE(user_id,kind,reference));
+CREATE INDEX IF NOT EXISTS ledger_user ON ledger(user_id);
 CREATE TABLE IF NOT EXISTS quotes(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),tool_id TEXT NOT NULL,task_id TEXT NOT NULL,amount INTEGER NOT NULL,price_version INTEGER NOT NULL,parameters_hash TEXT NOT NULL,expires_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS reservations(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),tool_id TEXT NOT NULL,task_id TEXT NOT NULL,quote_id TEXT NOT NULL REFERENCES quotes(id),amount INTEGER NOT NULL,state TEXT NOT NULL,allocations TEXT NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,UNIQUE(tool_id,task_id));
 CREATE TABLE IF NOT EXISTS cancelled_operations(tool_id TEXT NOT NULL,task_id TEXT NOT NULL,PRIMARY KEY(tool_id,task_id));
@@ -16,6 +17,7 @@ CREATE TABLE IF NOT EXISTS idempotency(scope TEXT NOT NULL,key TEXT NOT NULL,req
 CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS batches(id TEXT PRIMARY KEY,name TEXT NOT NULL,credits INTEGER NOT NULL,created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS codes(id TEXT PRIMARY KEY,code TEXT UNIQUE NOT NULL,batch_id TEXT NOT NULL REFERENCES batches(id),credits INTEGER NOT NULL,status TEXT NOT NULL DEFAULT 'active',redeemed_by TEXT REFERENCES users(id),created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS codes_batch ON codes(batch_id,status);
 CREATE TABLE IF NOT EXISTS oidc(model TEXT NOT NULL,id TEXT NOT NULL,payload TEXT NOT NULL,expires_at INTEGER,grant_id TEXT,user_code TEXT,uid TEXT,account_id TEXT,PRIMARY KEY(model,id));
 CREATE INDEX IF NOT EXISTS oidc_account ON oidc(account_id);
 CREATE INDEX IF NOT EXISTS oidc_grant ON oidc(grant_id);

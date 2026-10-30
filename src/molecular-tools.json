@@ -1,0 +1,285 @@
+[
+  {
+    "id": "mol-translation",
+    "slug": "translation",
+    "name": "DNA 翻译成氨基酸",
+    "category": "序列转换",
+    "keywords": [
+      "DNA",
+      "RNA",
+      "translation",
+      "genetic",
+      "code",
+      "amino",
+      "acid"
+    ],
+    "description": "阅读框、正负链与遗传密码表控制的序列翻译。",
+    "execution": "sync"
+  },
+  {
+    "id": "mol-sequence-filter",
+    "slug": "sequence-filter",
+    "name": "DNA 序列过滤",
+    "category": "序列转换",
+    "keywords": [
+      "FASTA",
+      "DNA",
+      "filter",
+      "clean",
+      "IUPAC"
+    ],
+    "description": "严格校验或显式清洗，逐项列出字符改动。",
+    "execution": "sync"
+  },
+  {
+    "id": "mol-primer-properties",
+    "slug": "primer-properties",
+    "name": "PCR 引物性质计算",
+    "category": "引物与寡核苷酸",
+    "keywords": [
+      "PCR",
+      "primer",
+      "Tm",
+      "hairpin",
+      "dimer"
+    ],
+    "description": "计算引物 Tm、发夹、同源及异源二聚体。",
+    "execution": "sync"
+  },
+  {
+    "id": "mol-reverse-complement",
+    "slug": "reverse-complement",
+    "name": "反向、互补与反向互补",
+    "category": "序列转换",
+    "keywords": [
+      "DNA",
+      "RNA",
+      "reverse",
+      "complement",
+      "IUPAC"
+    ],
+    "description": "保留简并碱基，执行指定方向转换。",
+    "execution": "sync"
+  },
+  {
+    "id": "mol-back-translation",
+    "slug": "back-translation",
+    "name": "蛋白质反向翻译",
+    "category": "密码子",
+    "keywords": [
+      "protein",
+      "back",
+      "translation",
+      "codon"
+    ],
+    "description": "选择同义密码子构建一种可能的编码序列。",
+    "execution": "sync"
+  },
+  {
+    "id": "mol-codon-table",
+    "slug": "codon-table",
+    "name": "交互密码子表",
+    "category": "密码子",
+    "keywords": [
+      "genetic",
+      "code",
+      "codon",
+      "table",
+      "amino",
+      "acid"
+    ],
+    "description": "查询各遗传密码表、起始及终止密码子。",
+    "execution": "sync"
+  },
+  {
+    "id": "mol-oligo-calculator",
+    "slug": "oligo-calculator",
+    "name": "寡核苷酸计算器",
+    "category": "引物与寡核苷酸",
+    "keywords": [
+      "DNA",
+      "RNA",
+      "oligonucleotide",
+      "mass",
+      "extinction",
+      "Tm"
+    ],
+    "description": "计算未修饰 DNA/RNA 质量、消光系数及 Tm。",
+    "execution": "sync"
+  },
+  {
+    "id": "mol-gc-content",
+    "slug": "gc-content",
+    "name": "GC 含量及滑窗分析",
+    "category": "序列分析",
+    "keywords": [
+      "GC",
+      "content",
+      "sliding",
+      "window"
+    ],
+    "description": "按明确的简并碱基政策统计 GC 与滑窗。",
+    "execution": "sync"
+  },
+  {
+    "id": "mol-dna-mass",
+    "slug": "dna-mass",
+    "name": "DNA 分子量",
+    "category": "序列分析",
+    "keywords": [
+      "DNA",
+      "molecular",
+      "weight",
+      "mass",
+      "circular"
+    ],
+    "description": "区分单/双链、线性/环状及平均/单同位素质量。",
+    "execution": "sync"
+  },
+  {
+    "id": "mol-degenerate-codon",
+    "slug": "degenerate-codon",
+    "name": "简并密码子编码解析",
+    "category": "密码子",
+    "keywords": [
+      "IUPAC",
+      "degenerate",
+      "codon",
+      "amino",
+      "acid",
+      "stop"
+    ],
+    "description": "展开简并密码子并统计氨基酸与终止比例。",
+    "execution": "sync"
+  },
+  {
+    "id": "mol-cpg-islands",
+    "slug": "cpg-islands",
+    "name": "CpG 岛预测",
+    "category": "序列分析",
+    "keywords": [
+      "CpG",
+      "island",
+      "observed",
+      "expected",
+      "GC"
+    ],
+    "description": "按窗口 GC 与 CpG O/E 阈值合并候选区间。",
+    "execution": "sync"
+  },
+  {
+    "id": "mol-palindromes",
+    "slug": "palindromes",
+    "name": "回文序列查找",
+    "category": "序列分析",
+    "keywords": [
+      "palindrome",
+      "reverse",
+      "complement"
+    ],
+    "description": "查找反向互补回文或普通字符串回文。",
+    "execution": "sync"
+  },
+  {
+    "id": "mol-pcr-products",
+    "slug": "pcr-products",
+    "name": "模拟 PCR 产物",
+    "category": "引物与寡核苷酸",
+    "keywords": [
+      "PCR",
+      "in",
+      "silico",
+      "circular",
+      "template",
+      "exact"
+    ],
+    "description": "在两条模板链上查找精确匹配的引物扩增产物。",
+    "execution": "sync"
+  },
+  {
+    "id": "mol-degenerate-design",
+    "slug": "degenerate-design",
+    "name": "允许冗余的简并密码子设计",
+    "category": "密码子设计",
+    "keywords": [
+      "degenerate",
+      "codon",
+      "design",
+      "coverage"
+    ],
+    "description": "穷举单个简并密码子，报告额外氨基酸及终止。",
+    "execution": "async"
+  },
+  {
+    "id": "mol-nonredundant-design",
+    "slug": "nonredundant-design",
+    "name": "非冗余简并密码子组合设计",
+    "category": "密码子设计",
+    "keywords": [
+      "nonredundant",
+      "exact",
+      "cover",
+      "codon"
+    ],
+    "description": "有界搜索互不重叠的精确氨基酸覆盖组合。",
+    "execution": "async"
+  },
+  {
+    "id": "mol-restriction-digest",
+    "slug": "restriction-digest",
+    "name": "虚拟限制性内切酶酶切",
+    "category": "限制酶",
+    "keywords": [
+      "restriction",
+      "enzyme",
+      "digest",
+      "plasmid",
+      "circular"
+    ],
+    "description": "显示识别位点、双链切点及正链边界片段。",
+    "execution": "sync"
+  },
+  {
+    "id": "mol-restriction-sites",
+    "slug": "restriction-sites",
+    "name": "酶切位点汇总",
+    "category": "限制酶",
+    "keywords": [
+      "restriction",
+      "sites",
+      "zero",
+      "single",
+      "multiple"
+    ],
+    "description": "按酶汇总零切、单切与多切及位点详情。",
+    "execution": "sync"
+  },
+  {
+    "id": "mol-repeats",
+    "slug": "repeats",
+    "name": "重复序列查找",
+    "category": "序列分析",
+    "keywords": [
+      "repeat",
+      "tandem",
+      "dispersed",
+      "overlap"
+    ],
+    "description": "查找线性正链精确串联或散在重复。",
+    "execution": "sync"
+  },
+  {
+    "id": "mol-synonymous-sites",
+    "slug": "synonymous-sites",
+    "name": "保持氨基酸的酶切位点设计",
+    "category": "限制酶",
+    "keywords": [
+      "synonymous",
+      "restriction",
+      "site",
+      "design"
+    ],
+    "description": "在完整 CDS 中以同义替换引入确定性识别位点。",
+    "execution": "async"
+  }
+]

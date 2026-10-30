@@ -61,6 +61,12 @@ npx tsx scripts/integration.ts
 npx tsx scripts/navigation-smoke.ts
 # 已恢复公共模板的浏览器创作、个人副本和隔离检查
 npx tsx scripts/template-smoke.ts
+# 用户管理分页、权限弹窗、错误重试及手机/键盘验收（仅合成开发数据）
+npx tsx scripts/admin-users-smoke.ts
+# 深浅主题、无刷新菜单及积分流水分页（仅合成开发数据）
+npx tsx scripts/theme-ledger-smoke.ts
+# 我的任务及兑换码批次分页（仅合成开发数据）
+npx tsx scripts/tasks-batches-smoke.ts
 # 真实开发进程停止/重启检查（会短暂中断 3200/3201）
 npx tsx scripts/restart-smoke.ts
 # yinglan 仓库：独立模式及钱包恢复回归
@@ -74,7 +80,7 @@ npm run build
 
 ## 协议与后续工作
 
-公共接口位于相邻 `contracts/openapi/platform-v1.json`（0.1.0），应用保存生成客户端和 SHA-256 锁文件。`npm run contracts:check` 检查漂移；禁止手改 `src/generated`。
+公共接口位于相邻 `contracts/openapi/platform-v1.json`（0.1.3，兼容 0.1.0–0.1.2），应用保存生成客户端和 SHA-256 锁文件。`npm run contracts:check` 检查漂移；禁止手改 `src/generated`。
 
 后续工具接入见 [接入下一个工具](docs/接入下一个工具.md)。当前 OIDC 客户端、服务身份及任务聚合明确注册 Yinglan 与 AbTrace；新增工具仍需同步注册并补权限测试，工具清单不会自动注册任意远程服务地址。
 
@@ -85,3 +91,13 @@ AbTrace 已完整增加独立客户端、工具角色、worker 钱包边界及�
 Sanger 首次 Docker 发布操作见 `deploy/sanger-release.py` 和相邻 `sanger/deploy/README.md`。默认检查正式 HTTPS/准确回调，不使用跳过证书验证。`--execute` 维护并冷备份平台后更新生产镜像和 sanger:user 权限；不改原账号密码与钱包，保留角色回滚日志。
 
 Sanger Docker 已于北京时间 2026-10-30 上线：https://sanger.zhangwuji.work:49998；正常已验证账号已添加普通工具权限，首发免费，旧 Sanger 数据显式映射。Yinglan 容器未重启。发布详情见相邻 sanger/deploy/发布记录-2026-10-30.md。
+
+用户与权限管理改造及开发验收见 [用户权限与分页](docs/用户权限与分页.md)。工具权限弹窗从受控注册读取角色；用户列表使用服务端分页，可按邮箱/账号名称、状态与平台角色筛选，默认 20 条，可选 50/100 条。
+
+字体可读性、主题切换、工作台导航与积分流水分页见 [主题与工作台体验](docs/主题与工作台体验.md)。
+
+我的任务与兑换码批次均提供上一页、下一页及 20/50/100 每页条数。任务使用工具游标，不显示未经提供的总数；批次使用带总数的服务端页码分页。验证和限制见 [任务与批次分页](docs/任务与批次分页.md)。
+
+2026-10-30 已按用户后续明确授权发布平台生产，本会话改造全部上线。备份、镜像和验收见 [平台体验发布记录](docs/发布记录-2026-10-30-平台体验.md)。
+
+分子工具开发接入：`MOLECULAR_ENABLED=true`仅在development生效，19个mol-*逻辑工具共享molecular-tools OIDC客户端，权限与零积分compute任务归具体工具。开发启动器生成独立随机用户/worker凭据；生产强制关闭本轮新应用。页面入口在3203；既有用户不自动增权，管理员可在“用户与权限”按分类批选并逐工具保存。目录默认最多8卡，可搜索分类/展开全部；详细方法、入口及验收见相邻molecular-tools/docs/验收记录.md。本轮未发布生产。

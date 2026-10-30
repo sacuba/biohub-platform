@@ -1,0 +1,38 @@
+/** Operator-only platform release check. Uses one temporary identity; never opens tool databases. */
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import Database from 'better-sqlite3';
+import assert from 'node:assert/strict';
+import {chromium,expect} from '@playwright/test';
+const args=process.argv.slice(2),root=fs.realpathSync(args[args.indexOf('--root')+1]||''),base=args[args.indexOf('--url')+1];
+const rehearsal=args.includes('--rehearsal'),url=new URL(base);
+assert.ok(rehearsal?root.startsWith('/opt/sci_image/release-runtime/platform-console/')&&url.hostname==='localhost':root==='/opt/sci_image/platform-prod'&&base==='https://biohub.zhangwuji.work:49998');
+assert.equal(url.protocol,'https:');
+const directory=path.join(root,'data'),probeFile=path.join(directory,'.migration-probe'),probe=crypto.randomBytes(32).toString('hex');assert.equal(fs.existsSync(probeFile),false);
+const db=new Database(path.join(directory,'platform.sqlite'),{fileMustExist:true});db.pragma('foreign_keys=ON');
+const id='console_release_probe_'+crypto.randomUUID(),email=id+'@biohub.invalid',session=crypto.randomBytes(32).toString('base64url'),digest=crypto.createHash('sha256').update(session).digest('hex');
+fs.writeFileSync(probeFile,probe,{mode:0o600,flag:'wx'});fs.chownSync(probeFile,1000,1000);
+let browser:Awaited<ReturnType<typeof chromium.launch>>|undefined;
+const errors:string[]=[];const passed:string[]=[];
+try{
+ db.prepare('INSERT INTO users(id,email,password_hash,role,verified,active,tool_roles,created_at) VALUES(?,?,?,\'admin\',1,1,?,?)').run(id,email,'!',JSON.stringify({}),new Date().toISOString());
+ db.prepare('INSERT INTO sessions VALUES(?,?,?,?)').run(digest,id,crypto.randomBytes(24).toString('hex'),Date.now()+600000);
+ browser=await chromium.launch({channel:'msedge',headless:true,args:['--no-sandbox']});const context=await browser.newContext({viewport:{width:1440,height:1000},colorScheme:'light',ignoreHTTPSErrors:rehearsal,extraHTTPHeaders:{'X-Biohub-Migration-Probe':probe},reducedMotion:'reduce'});
+ await context.addCookies([{name:'biohub_session',value:session,url:base,httpOnly:true,secure:true,sameSite:'Lax'}]);const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
+ // The admin screen must not request real user rows or mail settings during a release check.
+ await page.route('**/api/v1/admin/users?**',async route=>{const target=new URL(route.request().url());target.searchParams.set('keyword',email);await route.fulfill({response:await route.fetch({url:target.href})});});
+ await page.route('**/api/v1/admin/batches?**',async route=>{const target=new URL(route.request().url());target.searchParams.set('keyword',id);await route.fulfill({response:await route.fetch({url:target.href})});});
+ await page.route('**/api/v1/admin/mail',route=>route.fulfill({json:{host:'',port:587,secure:false,user:'',from:'',has_password:false,capture:false}}));
+ await page.goto(base+'/workspace?view=admin');await expect(page.getByRole('heading',{name:'用户与工具权限',exact:true})).toBeVisible();await expect(page.locator('.userTable tbody tr')).toHaveCount(1);await expect(page.locator('.userTable')).toContainText(email);await expect(page.getByRole('navigation',{name:'用户列表分页'})).toContainText('第 1 / 1 页');
+ await page.getByRole('button',{name:'管理工具权限',exact:true}).click();const dialog=page.getByRole('dialog');await expect(dialog.getByLabel('Yinglan 科研生图权限')).toHaveValue('');await expect(dialog.getByLabel('Sanger 抗体分析权限')).toHaveValue('');await dialog.getByLabel('Sanger 抗体分析权限').selectOption('user');page.once('dialog',event=>event.accept());await page.keyboard.press('Escape');await expect(dialog).toHaveCount(0);assert.equal((db.prepare('SELECT tool_roles FROM users WHERE id=?').get(id) as any).tool_roles,'{}');passed.push('own synthetic admin row, page controls, controlled tool permissions and cancel');
+ await page.evaluate(()=>{(window as any).releaseDocument='unchanged';(window as any).gateAppeared=false;new MutationObserver(()=>{if(document.querySelector('.workspaceGate'))(window as any).gateAppeared=true;}).observe(document.body,{childList:true,subtree:true});});
+ for(const name of ['我的任务','积分中心','个人账户','平台管理']){await page.locator('.sidebar').getByRole('button',{name,exact:true}).click();await expect(page.getByRole('heading',{name,exact:true})).toBeVisible();assert.equal(await page.evaluate(()=>(window as any).releaseDocument),'unchanged');}assert.equal(await page.evaluate(()=>(window as any).gateAppeared),false);passed.push('workspace menu remains in the same document without gate flash');
+ await page.getByRole('button',{name:'兑换码批次',exact:true}).click();await expect(page.getByRole('navigation',{name:'兑换码批次分页'})).toContainText('共 0 个批次');await page.getByLabel('批次每页条数').selectOption('100');await expect(page.locator('.codeBatches .tableWrap')).toHaveAttribute('aria-busy','false');
+ await page.locator('.sidebar').getByRole('button',{name:'我的任务',exact:true}).click();await expect(page.getByRole('navigation',{name:'任务分页'})).toContainText('本页 0 条任务');await page.getByLabel('任务每页条数').selectOption('50');await expect(page.locator('.taskList .tableWrap')).toHaveAttribute('aria-busy','false');
+ await page.locator('.sidebar').getByRole('button',{name:'积分中心',exact:true}).click();await expect(page.getByRole('navigation',{name:'积分流水分页'})).toContainText('共 0 条流水');await page.getByLabel('流水每页条数').selectOption('100');await expect(page.locator('.creditLedger .tableWrap')).toHaveAttribute('aria-busy','false');passed.push('production user/task/ledger/batch pagination endpoints and empty states');
+ await page.getByRole('button',{name:'切换深色模式',exact:true}).click();await expect(page.locator('html')).toHaveAttribute('data-theme','dark');await page.reload();await expect(page.locator('html')).toHaveAttribute('data-theme','dark');await expect(page.getByRole('button',{name:'切换浅色模式',exact:true})).toBeVisible();await page.getByRole('button',{name:'切换浅色模式',exact:true}).click();await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.getByRole('button',{name:'打开导航'}).click();await page.getByRole('link',{name:'平台首页',exact:false}).click();await expect(page).toHaveURL(base+'/');await expect(page.locator('.sidebar')).toHaveCount(0);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));passed.push('light/dark persistence, mobile layout and platform homepage link');
+ const guest=await browser.newContext({ignoreHTTPSErrors:rehearsal,extraHTTPHeaders:{'X-Biohub-Migration-Probe':probe}});for(const route of ['admin/users?page=1','admin/batches?page=1','wallet/ledger?page=1','tasks?limit=20'])assert.equal((await guest.request.get(base+'/api/v1/'+route)).status(),401);await guest.close();
+ const csrf=await context.request.post(base+'/api/v1/admin/users/'+id,{headers:{Origin:base},data:{tool_roles:{sanger:'user'}}});assert.equal(csrf.status(),403);assert.equal((db.prepare('SELECT tool_roles FROM users WHERE id=?').get(id) as any).tool_roles,'{}');passed.push('guest rejection and CSRF protection without permission writes');
+ assert.deepEqual(errors,[]);console.log(JSON.stringify({passed,errors,mode:rehearsal?'isolated-production-image':'public-production-HTTPS'}));
+}finally{await browser?.close();db.transaction(()=>{for(const table of ['sessions','account_tokens','buckets','ledger'])db.prepare('DELETE FROM '+table+' WHERE user_id=?').run(id);db.prepare('DELETE FROM oidc WHERE account_id=?').run(id);db.prepare('DELETE FROM users WHERE id=?').run(id);})();db.close();fs.rmSync(probeFile,{force:true});}

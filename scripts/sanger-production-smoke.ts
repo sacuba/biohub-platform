@@ -45,7 +45,7 @@ try{
  await test('result deep link, mobile, keyboard and navigation use production URLs',async()=>{
   await page.goto(tool+'/?task='+task.id+'&run='+task.run_id);await page.locator('#overviewDomain').waitFor();
   await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
-  assert.equal(await page.getByRole('link',{name:'平台工作台'}).getAttribute('href'),platform+'/workspace');
+  await page.locator('#mobileMenu').click();await page.getByRole('link',{name:'平台工作台'}).waitFor({state:'visible'});assert.equal(await page.getByRole('link',{name:'平台工作台'}).getAttribute('href'),platform+'/workspace');await page.keyboard.press('Escape');
  });
  await test('tool logout revokes platform and the established tool session',async()=>{
   assert.equal((await api(a,'auth/logout',{},true)).status,200);assert.equal((await api(a,'auth/me',undefined,true)).status,401);assert.equal((await api(a,'auth/me')).data.user,null);
